@@ -100,7 +100,6 @@ def plotPhi(PsiInit, PhiInit, option, dilaton):
     plt.title('Dilaton field $\Phi$ - $\Phi_0$', fontsize=12)
     xlim(0,450)
 
-#test()
 def main():
     
     test()
