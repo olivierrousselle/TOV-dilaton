@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 import scipy.constants as cst
-import matplotlib 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import linalg as npla
 
-c2 = cst.c**2    
+c2 = cst.c**2
 kappa = 8*np.pi*cst.G/c2**2
 k = 1.475*10**(-3)*(cst.fermi**3/(cst.eV*10**6))**(2/3)*c2**(5/3)
 
 #Equation of state
-def PEQS(rho): 
+def PEQS(rho):
     return k*rho**(5/3)
 
 #Inverted equation of state
@@ -21,9 +21,9 @@ def RhoEQS(P):
 def Lagrangian(P, option):
     rho = RhoEQS(P)
     if option == 0:
-        return -c2*rho+3*P 
+        return -c2*rho+3*P
     elif option == 1:
-        return -c2*rho         
+        return -c2*rho
     elif option == 2:
         return P
     else:
@@ -88,14 +88,14 @@ def f4(r, P, m, Psi, Phi, option):
     return Psi
 
 class TOV():
-   
+
     def __init__(self, initRadius, initDensity, initPsi, initPhi, radiusStep, option, dilaton):
 #Init value
         self.initDensity = initDensity
-        self.initPressure = PEQS(initDensity)   
+        self.initPressure = PEQS(initDensity)
         self.initPsi = initPsi
         self.initPhi = initPhi
-        self.initMass = 0    
+        self.initMass = 0
         self.initRadius = initRadius
 #Computation variable
         self.limitCompute = 5000
@@ -107,29 +107,29 @@ class TOV():
         self.stepStar = 0
         self.LambdaStar = 0
 #Output vector
-        self.pressure = 0 
+        self.pressure = 0
         self.mass = 0
         self.Phi = 0
-        self.Psi = 0 
+        self.Psi = 0
         self.metric00 = 0
         self.metric11 = 0
         self.radius = 0
 
         self.PhiInf = 0
         self.option = option
-        self.dilaton = dilaton 
+        self.dilaton = dilaton
 
     def Compute(self):
 # Initialisation ===================================================================================
         dr = self.radiusStep
-        n = 0 
+        n = 0
         P =        [self.initPressure]
-        m =        [self.initMass]	
+        m =        [self.initMass]
         Psi =      [self.initPsi]
         Phi =      [self.initPhi]
         r =        [self.initRadius]
         metric11 = [b(r[0],m[0])]
-        metric00 = [1]
+        metric00 = [1]      # Coordinate time as proper time at center
         # Inside the star----------------------------------------------------------------------------
         while(P[n]>10**26):
             if(n == self.limitCompute):
@@ -142,7 +142,7 @@ class TOV():
                     Phi.append(   Phi[n] + dr*f4(r[n], P[n], m[n], Psi[n], Phi[n], self.option ))
                     Psi.append(   Psi[n] + dr*f3(r[n], P[n], m[n], Psi[n], Phi[n], self.option ))
                 else:
-                    Phi.append(   Phi[n] )               
+                    Phi.append(   Phi[n] )
                     Psi.append(   Psi[n] )
                 metric11.append(b(r[n], m[n]))
                 metric00.append(metric00[n] + dr*metric00[n]*adota(r[n], P[n], m[n], Psi[n], Phi[n]))
@@ -174,10 +174,7 @@ class TOV():
             metric00.append(metric00[n] + dr*metric00[n]*adota(r[n],0, m[n], Psi[n], Phi[n]))
             n = n+1
             r.append(self.initRadius+n*dr)
-        # Physical dimension
-        metric00 = [x/metric00[-1] for x in metric00]
-        m = [x*Phi[-1]**(-3/4) for x in m]
-        r = [x*Phi[-1]**(-1/4) for x in r]
+
         # Star property
         self.massStar = self.mass[self.stepStar]
         self.radiusStar = r[self.stepStar]
@@ -192,10 +189,10 @@ class TOV():
         dr = self.radiusStep
         n = 0 #Integration parameter
         P =        [self.initPressure]
-        m =        [self.initMass]	
+        m =        [self.initMass]
         r =        [self.initRadius]
         metric11 = [b(r[0],m[0])]
-        metric00 = [1]
+        metric00 = [1]      # Coordinate time as proper time at center
         while(P[n]>10**26):
             if(n == self.limitCompute):
                 break
@@ -221,7 +218,7 @@ class TOV():
         self.metric00 = metric00
         self.metric11 = metric11
 
-        
+
     def PlotEvolution(self):
         plt.figure()
         plt.plot([x/10**3 for x in self.radius[0:self.stepStar*2]], [x for x in self.pressure[0:self.stepStar*2]])
@@ -242,8 +239,8 @@ class TOV():
         plt.plot([x/10**3 for x in self.radius[0:self.stepStar*20]], self.Psi[0:self.stepStar*20])
         plt.xlabel('Radius r (km)')
         plt.title('Ψ (derivative of Φ)', fontsize=12)
-        
-        plt.figure()        
+
+        plt.figure()
         ax3 = plt.subplot(1,2,1)
         plt.plot([x/10**3 for x in self.radius], self.metric00)
         plt.xlabel('Radius r (km)')
@@ -255,12 +252,12 @@ class TOV():
         plt.ylabel('b')
 
         plt.show()
-        
+
     def Phi_infini(self):
         return self.Phi[self.stepStar*10]
-    
+
     def Phi_r(self):
         M = np.zeros(len(self.Phi))
         for i in range(len(self.Phi)):
             M[i] = self.Phi[i]-self.initPhi
-        plt.plot([x/10**3 for x in self.radius[:]], M)       
+        plt.plot([x/10**3 for x in self.radius[:]], M)
