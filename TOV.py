@@ -129,7 +129,7 @@ class TOV():
         Phi =      [self.initPhi]
         r =        [self.initRadius]
         metric11 = [b(r[0],m[0])]
-        metric00 = [1]
+        metric00 = [1]      # Coordinate time as proper time at center
         # Inside the star----------------------------------------------------------------------------
         while(P[n]>10**26):
             if(n == self.limitCompute):
@@ -192,7 +192,7 @@ class TOV():
         m =        [self.initMass]
         r =        [self.initRadius]
         metric11 = [b(r[0],m[0])]
-        metric00 = [1]
+        metric00 = [1]      # Coordinate time as proper time at center
         while(P[n]>10**26):
             if(n == self.limitCompute):
                 break
