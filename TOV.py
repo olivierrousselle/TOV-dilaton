@@ -125,8 +125,7 @@ class TOV():
         self.Psi = 0
         self.radius = 0
         self.metric11 = 0
-#Other output
-        self.PhiInf = 0
+        self.metric00 = 0
 
     def Compute(self):
         y0 = [self.initPressure,self.initMass,self.initPhi,self.initPsi]
@@ -157,29 +156,36 @@ class TOV():
         self.Psi = np.concatenate([self.Psi,  sol[:,2]])
         self.radius = np.concatenate([self.radius, r])
         self.metric11 = b(self.radius, self.mass)
+        #self.metric00 =
 
     def PlotEvolution(self):
         plt.subplot(221)
         plt.plot([x/10**3 for x in self.radius], [x for x in self.pressure])
         plt.xlabel('Radius r (km)')
         plt.title('Pressure P (Pa)', fontsize=12)
+        plt.axvline(x=self.radiusStar, '-r')
 
         plt.subplot(222)
         plt.plot([x/10**3 for x in self.radius], [x/(1.989*10**30) for x in self.mass])
         plt.xlabel('Radius r (km)')
         plt.title('Mass $M/M_{\odot}$', fontsize=12)
+        plt.axvline(x=self.radiusStar, '-r')
 
         plt.subplot(223)
         plt.plot([x/10**3 for x in self.radius], self.Phi)
         plt.xlabel('Radius r (km)')
         plt.title('Dilaton field Φ', fontsize=12)
+        plt.axvline(x=self.radiusStar, '-r')
 
         plt.subplot(224)
         plt.plot([x/10**3 for x in self.radius], self.Psi)
         plt.xlabel('Radius r (km)')
         plt.title('Ψ (derivative of Φ)', fontsize=12)
+        plt.axvline(x=self.radiusStar, '-r')
 
         plt.show()
+
+
 
     def Phi_infini(self):
         return self.Phi[-1]
