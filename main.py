@@ -6,15 +6,17 @@ import scipy.constants as cst
 
 def test():
     rhoInit = 10*cst.eV*10**6/(cst.c**2*cst.fermi**3)
-    radiusMax = 100000
-    Npoint = 1000
+    radiusMax = 10000000
+    Npoint = 100000
     PsiInit = 0
-    PhiInit = 1
+    PhiInit = 2/2.0005115957706754/1.0000000175430597
     option = 1
     dilaton = True
     tov = TOV(rhoInit, PsiInit, PhiInit, radiusMax, Npoint, option)
     tov.Compute()
     tov.PlotEvolution()
+    print(tov.Phi_infini())
+    print(tov.radiusStar)
 
 
 def plotDensityMass(PsiInit, PhiInit, option, dilaton):

@@ -163,25 +163,25 @@ class TOV():
         plt.plot([x/10**3 for x in self.radius], [x for x in self.pressure])
         plt.xlabel('Radius r (km)')
         plt.title('Pressure P (Pa)', fontsize=12)
-        plt.axvline(x=self.radiusStar, '-r')
+        plt.axvline(x=self.radiusStar/10**3, color='r')
 
         plt.subplot(222)
         plt.plot([x/10**3 for x in self.radius], [x/(1.989*10**30) for x in self.mass])
         plt.xlabel('Radius r (km)')
         plt.title('Mass $M/M_{\odot}$', fontsize=12)
-        plt.axvline(x=self.radiusStar, '-r')
+        plt.axvline(x=self.radiusStar/10**3, color='r')
 
         plt.subplot(223)
         plt.plot([x/10**3 for x in self.radius], self.Phi)
         plt.xlabel('Radius r (km)')
         plt.title('Dilaton field Φ', fontsize=12)
-        plt.axvline(x=self.radiusStar, '-r')
+        plt.axvline(x=self.radiusStar/10**3, color='r')
 
         plt.subplot(224)
         plt.plot([x/10**3 for x in self.radius], self.Psi)
         plt.xlabel('Radius r (km)')
         plt.title('Ψ (derivative of Φ)', fontsize=12)
-        plt.axvline(x=self.radiusStar, '-r')
+        plt.axvline(x=self.radiusStar/10**3, color='r')
 
         plt.show()
 
