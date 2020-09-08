@@ -111,14 +111,14 @@ def dy_dr_out(y, r, P, option, dilaton_active):
 
 class TOV():
 
-    def __init__(self, initDensity, initPsi, initPhi, radiusMax_in, radiusMax_out, Npoint, option, dilaton_active, log_active):
+    def __init__(self, initDensity, initPsi, initPhi, radiusMax_in, radiusMax_out, Npoint, EQS_type, dilaton_active, log_active):
 #Init value
         self.initDensity = initDensity
         self.initPressure = PEQS(initDensity)
         self.initPsi = initPsi
         self.initPhi = initPhi
         self.initMass = 0
-        self.option = option
+        self.option = EQS_type
         self.dilaton_active = dilaton_active
         self.log_active = log_active
 
@@ -163,6 +163,10 @@ class TOV():
         sol = solv(dy_dr, y0, r, args=(self.option,self.dilaton_active))
         # condition for Pressure = 0
         self.Nstar = len(sol[sol[:,0]>10,0])-1
+        plt.plot(range(len(sol[:,0])),sol[:,0])
+        print(sol[:,0])
+        plt.axvline(self.Nstar)
+        plt.show()
         self.pressure = sol[0:self.Nstar,0]
         self.mass = sol[0:self.Nstar:1,1]
         self.Phi = sol[0:self.Nstar:1,2]
@@ -207,6 +211,9 @@ class TOV():
 
 
     def ComputeTOV(self):
+        """
+        ComputeTOV is the function to consider in order to compute "physical" quantities. It takes into account phi_inf->1 r->ininity
+        """
         self.Compute()
         self.initPhi = self.initPhi/self.phi_inf
         self.Compute()

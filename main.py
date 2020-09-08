@@ -4,8 +4,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import scipy.constants as cst
 import numpy as np
+import math
 
-def test():
+def unit_test():
     PhiInit = 1
     PsiInit = 0
     option = 1
@@ -33,10 +34,18 @@ def findSameMass(mass):
     radiusMax_in = 50000
     radiusMax_out = 10000000
     Npoint = 50000
+    "density in MeV/fm^3"
     rhoMin = 100
     rhoMax = 8200
     log_active = False
-    rho = [x*cst.eV*10**6/(cst.c**2*cst.fermi**3) for x in range(rhoMin,rhoMax,1)]
+    if 0:
+        "Log scale"
+        Npoint_rho = 50 #<- number of points
+        rho = [x*cst.eV*10**6/(cst.c**2*cst.fermi**3) for x in np.logspace(np.log10(rhoMin),np.log10(rhoMax),num=Npoint_rho)]
+    else:
+        "Linear scale"
+        rhoStep = 50 #<- step in MeV/fm^3
+        rho = [x*cst.eV*10**6/(cst.c**2*cst.fermi**3) for x in range(rhoMin,rhoMax,rhoStep)]
     massStar_GR = np.array([])
     massStar_ER = np.array([])
     radiusStar_GR = np.array([])
@@ -73,9 +82,10 @@ def findSameMass(mass):
         print('density in [MeV/fm^3]: ', rho_GR)
         print('mass accuracy un %: ', sol_acc_GR)
 
-    plt.plot(rho, massStar_ER+mass)
+    plt.scatter(rho, massStar_ER+mass)
     for i in range(len(rho_ER)):
         plt.axvline(rho_ER[i])
+    plt.axhline(mass)
     plt.show()
 
 def plotRelation():
@@ -174,9 +184,9 @@ def plotFig5():
 
 
 def main():
-    #test()
+    unit_test()
     #plotRelation()
-    findSameMass(1.25)
+    #findSameMass(1.25)
     #plotFig4()
     #plotFig5()
 
