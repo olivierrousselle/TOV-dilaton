@@ -163,10 +163,12 @@ class TOV():
         sol = solv(dy_dr, y0, r, args=(self.option,self.dilaton_active))
         # condition for Pressure = 0
         self.Nstar = len(sol[sol[:,0]>10,0])-1
+        ''' show solution inside star after pressure condition
         plt.plot(range(len(sol[:,0])),sol[:,0])
         print(sol[:,0])
         plt.axvline(self.Nstar)
         plt.show()
+        '''
         self.pressure = sol[0:self.Nstar,0]
         self.mass = sol[0:self.Nstar:1,1]
         self.Phi = sol[0:self.Nstar:1,2]

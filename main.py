@@ -13,7 +13,7 @@ def unit_test():
     radiusMax_in = 50000
     radiusMax_out = 1000000
     Npoint = 50000
-    log_active = False
+    log_active = True
     dilaton_active = True
     rhoInit = 100*cst.eV*10**6/(cst.c**2*cst.fermi**3)
     tov = TOV(rhoInit, PsiInit, PhiInit, radiusMax_in, radiusMax_out, Npoint, option, dilaton_active, log_active)
