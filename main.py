@@ -11,8 +11,8 @@ def unit_test():
     PsiInit = 0
     option = 1
     radiusMax_in = 50000
-    radiusMax_out = 1000000
-    Npoint = 50000
+    radiusMax_out = 100000
+    Npoint = 400000
     log_active = True
     dilaton_active = True
     rhoInit = 100*cst.eV*10**6/(cst.c**2*cst.fermi**3)
@@ -99,6 +99,7 @@ def plotRelation():
     rhoMax = 8200
     log_active = False
     massStar_GR = []
+    massADM_ER = []
     massStar_ER = []
     radiusStar_GR = []
     radiusStar_ER = []
@@ -112,9 +113,11 @@ def plotRelation():
         tov = TOV(iRho, PsiInit, PhiInit, radiusMax_in, radiusMax_out, Npoint, option, True, log_active)
         tov.ComputeTOV()
         massStar_ER.append(tov.massStar)
+        massADM_ER.append(tov.massADM)
         radiusStar_ER.append(tov.radiusStar)
     plt.plot([x/(cst.eV*10**6/(cst.c**2*cst.fermi**3)) for x in rho], [x/(1.989*10**30) for x in massStar_GR], label='GR')
     plt.plot([x/(cst.eV*10**6/(cst.c**2*cst.fermi**3)) for x in rho], [x/(1.989*10**30) for x in massStar_ER], label='ER')
+    plt.plot([x/(cst.eV*10**6/(cst.c**2*cst.fermi**3)) for x in rho], [x/(1.989*10**30) for x in massADM_ER], label='ER ADM')
     plt.xlabel('Density $\\rho$ ($Mev/fm^3$)')
     plt.ylabel('Mass $M/M_{\odot}$')
     plt.legend()
@@ -127,6 +130,7 @@ def plotRelation():
     plt.show()
     plt.plot([x/1000 for x in radiusStar_GR], [x/(1.989*10**30) for x in massStar_GR], label='GR')
     plt.plot([x/1000 for x in radiusStar_ER], [x/(1.989*10**30) for x in massStar_ER], label='ER')
+    plt.plot([x/1000 for x in radiusStar_ER], [x/(1.989*10**30) for x in massADM_ER], label='ER ADM')
     plt.xlabel('Radius (km)')
     plt.ylabel('Mass $M/M_{\odot}$')
     plt.legend()

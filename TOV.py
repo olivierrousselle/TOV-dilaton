@@ -129,6 +129,7 @@ class TOV():
 #Star data
         self.Nstar = 0
         self.massStar = 0
+        self.massADM = 0
         self.pressureStar = 0
         self.radiusStar = 0
 #Output data
@@ -206,6 +207,7 @@ class TOV():
         self.g_rr = b(self.radius, self.mass)
         a_dot_a = adota(self.radius, self.pressure, self.mass, self.Psi, self.Phi)
         self.g_tt = np.exp(np.concatenate([[0.0], integcum(a_dot_a,self.radius)])-integ(a_dot_a,self.radius))
+        self.massADM = self.mass[-1]
         if self.log_active == True:
             print('===========================================================')
             print('END')
