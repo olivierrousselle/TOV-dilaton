@@ -4,7 +4,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import linalg as npla
-from scipy.integrate import odeint as solv
+from scipy.integrate import solve_ivp
 from scipy.integrate import cumtrapz as integcum
 from scipy.integrate import trapz as integ
 
@@ -98,13 +98,13 @@ def f3(r, P, m, Psi, Phi, option, dilaton_active):
         return 0
 
 #Define for dy/dr
-def dy_dr(y, r, option, dilaton_active):
+def dy_dr(r, y, option, dilaton_active):
     P, M, Phi, Psi = y
     dy_dt = [f1(r, P, M, Psi, Phi, option), f2(r, P, M, Psi, Phi, option),f3(r, P, M, Psi, Phi, option, dilaton_active),f4(r, P, M, Psi, Phi, option, dilaton_active) ]
     return dy_dt
 
 #Define for dy/dr out of the star
-def dy_dr_out(y, r, P, option, dilaton_active):
+def dy_dr_out(r, y, P, option, dilaton_active):
     M, Phi, Psi = y
     dy_dt = [f2(r, P, M, Psi, Phi, option),f3(r, P, M, Psi, Phi, option, dilaton_active),f4(r, P, M, Psi, Phi, option, dilaton_active) ]
     return dy_dt
@@ -143,7 +143,7 @@ class TOV():
         self.phi_inf = 0
 
     def Compute(self):
-        if self.log_active == True:
+        if self.log_active:
             print('===========================================================')
             print('SOLVER INSIDE THE STAR')
             print('===========================================================\n')
@@ -155,63 +155,58 @@ class TOV():
             print('Number of points: ', self.Npoint)
             print('Radius max: ', self.radiusMax_in/1000, ' km')
         y0 = [self.initPressure,self.initMass,self.initPhi,self.initPsi]
-        if self.log_active == True:
+        if self.log_active:
             print('y0 = ', y0,'\n')
         r = np.linspace(0.01,self.radiusMax_in,self.Npoint)
-        if self.log_active == True:
+        if self.log_active:
             print('radius min ',0.01)
             print('radius max ',self.radiusMax_in)
-        sol = solv(dy_dr, y0, r, args=(self.option,self.dilaton_active))
+        sol = solve_ivp(dy_dr, [0.01, self.radiusMax_in], y0, t_eval=r ,args=(self.option,self.dilaton_active))
         # condition for Pressure = 0
-        self.Nstar = len(sol[sol[:,0]>10,0])-1
-        ''' show solution inside star after pressure condition
-        plt.plot(range(len(sol[:,0])),sol[:,0])
-        print(sol[:,0])
-        plt.axvline(self.Nstar)
-        plt.show()
-        '''
-        self.pressure = sol[0:self.Nstar,0]
-        self.mass = sol[0:self.Nstar:1,1]
-        self.Phi = sol[0:self.Nstar:1,2]
-        self.Psi = sol[0:self.Nstar:1,3]
-        self.radius = r[0:self.Nstar:1]
-        # Value at the radius of star
-        self.massStar = self.mass[-1]
-        self.radiusStar = self.radius[-1]
-        self.pressureStar = self.pressure[-1]
-        if self.log_active == True:
-            print('Star radius: ', self.radiusStar/1000, ' km')
-            print('Star Mass: ', self.massStar/massSun, ' solar mass')
-            print('Star pressure: ', self.pressureStar, ' Pa\n')
-        if self.log_active == True:
-            print('===========================================================')
-            print('SOLVER OUTSIDE THE STAR')
-            print('===========================================================\n')
-        y0 = [self.massStar, self.Phi[-1],self.Psi[-1]]
-        if self.log_active == True:
-            print('y0 = ', y0,'\n')
-        r = np.linspace(self.radiusStar,self.radiusMax_out,self.Npoint)
-        if self.log_active == True:
-            print('radius min ',self.radiusStar)
-            print('radius max ',self.radiusMax_out)
-        sol = solv(dy_dr_out, y0, r, args=(0,self.option,self.dilaton_active))
-        self.pressure = np.concatenate([self.pressure, np.zeros(self.Npoint-1)])
-        self.mass = np.concatenate([self.mass, sol[1:,0]])
-        self.Phi = np.concatenate([self.Phi, sol[1:,1]])
-        self.Psi = np.concatenate([self.Psi,  sol[1:,2]])
-        self.radius = np.concatenate([self.radius, r[1:]])
-        self.phi_inf = self.Phi[-1]
-        if self.log_active == True:
-            print('Phi at infinity ', self.phi_inf)
-        # Compute metrics
-        self.g_rr = b(self.radius, self.mass)
-        a_dot_a = adota(self.radius, self.pressure, self.mass, self.Psi, self.Phi)
-        self.g_tt = np.exp(np.concatenate([[0.0], integcum(a_dot_a,self.radius)])-integ(a_dot_a,self.radius))
-        self.massADM = self.mass[-1]
-        if self.log_active == True:
-            print('===========================================================')
-            print('END')
-            print('===========================================================\n')
+        if sol.t[-1]<self.radiusMax_in:
+            self.pressure = sol.y[0]
+            self.mass = sol.y[1]
+            self.Phi = sol.y[2]
+            self.Psi = sol.y[3]
+            self.radius = sol.t
+            # Value at the radius of star
+            self.massStar = self.mass[-1]
+            self.radiusStar = self.radius[-1]
+            self.pressureStar = self.pressure[-1]
+            if self.log_active:
+                print('Star radius: ', self.radiusStar/1000, ' km')
+                print('Star Mass: ', self.massStar/massSun, ' solar mass')
+                print('Star pressure: ', self.pressureStar, ' Pa\n')
+                print('===========================================================')
+                print('SOLVER OUTSIDE THE STAR')
+                print('===========================================================\n')
+            y0 = [self.massStar, self.Phi[-1],self.Psi[-1]]
+            if self.log_active:
+                print('y0 = ', y0,'\n')
+            r = np.linspace(self.radiusStar,self.radiusMax_out,self.Npoint)
+            if self.log_active:
+                print('radius min ',self.radiusStar)
+                print('radius max ',self.radiusMax_out)
+            sol = solve_ivp(dy_dr_out, [self.radiusStar, self.radiusMax_out], y0, t_eval=r, args=(0,self.option,self.dilaton_active))
+            self.pressure = np.concatenate([self.pressure, np.zeros(self.Npoint)])
+            self.mass = np.concatenate([self.mass, sol.y[0]])
+            self.Phi = np.concatenate([self.Phi, sol.y[1]])
+            self.Psi = np.concatenate([self.Psi,  sol.y[2]])
+            self.radius = np.concatenate([self.radius, sol.t])
+            self.phi_inf = self.Phi[-1]
+            if self.log_active:
+                print('Phi at infinity ', self.phi_inf)
+            # Compute metrics
+            self.g_rr = b(self.radius, self.mass)
+            a_dot_a = adota(self.radius, self.pressure, self.mass, self.Psi, self.Phi)
+            self.g_tt = np.exp(np.concatenate([[0.0], integcum(a_dot_a,self.radius)])-integ(a_dot_a,self.radius))
+            self.massADM = self.mass[-1]
+            if self.log_active:
+                print('===========================================================')
+                print('END')
+                print('===========================================================\n')
+        else:
+            print('Pressure=0 not reached')
 
 
     def ComputeTOV(self):

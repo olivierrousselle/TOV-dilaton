@@ -10,8 +10,8 @@ def unit_test():
     PhiInit = 1
     PsiInit = 0
     option = 1
-    radiusMax_in = 50000
-    radiusMax_out = 100000
+    radiusMax_in = 500000
+    radiusMax_out = 1000000
     Npoint = 400000
     log_active = True
     dilaton_active = True
