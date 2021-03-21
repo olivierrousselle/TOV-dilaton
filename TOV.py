@@ -132,6 +132,7 @@ class TOV():
         self.massADM = 0
         self.pressureStar = 0
         self.radiusStar = 0
+        self.phiStar = 0
 #Output data
         self.pressure = 0
         self.mass = 0
@@ -140,6 +141,9 @@ class TOV():
         self.radius = 0
         self.g_tt = 0
         self.g_rr = 0
+        self.g_tt_ext = 0
+        self.g_rr_ext = 0
+        self.r_ext = 0
         self.phi_inf = 0
 
     def Compute(self):
@@ -161,47 +165,64 @@ class TOV():
         if self.log_active:
             print('radius min ',0.01)
             print('radius max ',self.radiusMax_in)
-        sol = solve_ivp(dy_dr, [0.01, self.radiusMax_in], y0, t_eval=r ,args=(self.option,self.dilaton_active))
+        sol = solve_ivp(dy_dr, [0.01, self.radiusMax_in], y0, method='RK45',t_eval=r ,args=(self.option,self.dilaton_active))
         # condition for Pressure = 0
+        '''
+        self.g_rr = b(sol.t, sol.y[1])
+        a_dot_a = adota(sol.t, sol.y[0], sol.y[1], sol.y[3], sol.y[2])
+        self.g_tt = np.exp(np.concatenate([[0.0], integcum(a_dot_a,sol.t)])-integ(a_dot_a,sol.t))
+        plt.plot(self.g_tt/self.g_rr)
+        plt.show()
+        '''
         if sol.t[-1]<self.radiusMax_in:
-            self.pressure = sol.y[0]
-            self.mass = sol.y[1]
-            self.Phi = sol.y[2]
-            self.Psi = sol.y[3]
-            self.radius = sol.t
+            self.pressure = sol.y[0][0:-2]
+            self.mass = sol.y[1][0:-2]
+            self.Phi = sol.y[2][0:-2]
+            self.Psi = sol.y[3][0:-2]
+            self.radius = sol.t[0:-2]
             # Value at the radius of star
-            self.massStar = self.mass[-1]
-            self.radiusStar = self.radius[-1]
-            self.pressureStar = self.pressure[-1]
+            self.massStar = sol.y[1][-1]
+            self.radiusStar = sol.t[-1]
+            self.pressureStar = sol.y[0][-1]
+            self.phiStar = sol.y[2][-1]
+            n_star = len(self.radius)
             if self.log_active:
                 print('Star radius: ', self.radiusStar/1000, ' km')
                 print('Star Mass: ', self.massStar/massSun, ' solar mass')
+                print('Star Mass: ', self.massStar, ' kg')
                 print('Star pressure: ', self.pressureStar, ' Pa\n')
                 print('===========================================================')
                 print('SOLVER OUTSIDE THE STAR')
                 print('===========================================================\n')
-            y0 = [self.massStar, self.Phi[-1],self.Psi[-1]]
+            y0 = [self.massStar, sol.y[2][-1],sol.y[3][-1]]
             if self.log_active:
                 print('y0 = ', y0,'\n')
-            r = np.linspace(self.radiusStar,self.radiusMax_out,self.Npoint)
+            r = np.logspace(np.log(self.radiusStar)/np.log(10),np.log(self.radiusMax_out)/np.log(10),self.Npoint)
             if self.log_active:
                 print('radius min ',self.radiusStar)
                 print('radius max ',self.radiusMax_out)
-            sol = solve_ivp(dy_dr_out, [self.radiusStar, self.radiusMax_out], y0, t_eval=r, args=(0,self.option,self.dilaton_active))
+            sol = solve_ivp(dy_dr_out, [r[0], self.radiusMax_out], y0,method='DOP853', t_eval=r, args=(0,self.option,self.dilaton_active))
             self.pressure = np.concatenate([self.pressure, np.zeros(self.Npoint)])
             self.mass = np.concatenate([self.mass, sol.y[0]])
             self.Phi = np.concatenate([self.Phi, sol.y[1]])
             self.Psi = np.concatenate([self.Psi,  sol.y[2]])
-            self.radius = np.concatenate([self.radius, sol.t])
+            self.radius = np.concatenate([self.radius, r])
             self.phi_inf = self.Phi[-1]
             if self.log_active:
                 print('Phi at infinity ', self.phi_inf)
             # Compute metrics
             self.g_rr = b(self.radius, self.mass)
             a_dot_a = adota(self.radius, self.pressure, self.mass, self.Psi, self.Phi)
+            #plt.plot(self.radius, np.concatenate([[0.0], integcum(a_dot_a,self.radius)]))
+            #plt.show()
             self.g_tt = np.exp(np.concatenate([[0.0], integcum(a_dot_a,self.radius)])-integ(a_dot_a,self.radius))
             self.massADM = self.mass[-1]
+            self.g_tt_ext = np.array(self.g_tt[n_star:-1])
+            self.g_rr_ext = np.array(self.g_rr[n_star:-1])
+            self.r_ext = np.array(self.radius[n_star:-1])
+            self.r_ext[0] = self.radiusStar
             if self.log_active:
+                print('Star Mass ADM: ', self.massADM, ' kg')
                 print('===========================================================')
                 print('END')
                 print('===========================================================\n')
@@ -214,8 +235,9 @@ class TOV():
         ComputeTOV is the function to consider in order to compute "physical" quantities. It takes into account phi_inf->1 r->ininity
         """
         self.Compute()
-        self.initPhi = self.initPhi/self.phi_inf
-        self.Compute()
+        if self.dilaton_active:
+            self.initPhi = self.initPhi/self.phi_inf
+            self.Compute()
 
     def Plot(self):
         plt.subplot(221)
