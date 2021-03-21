@@ -10,9 +10,6 @@ from scipy.optimize import curve_fit
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
-def a_(x,gamma,r_m):
-    return (rho**2-(x**2)*(1-(r_m/x))**((2*gamma**2)/(1+gamma**2)))**2
-
 def unit_test():
     PhiInit = 1
     PsiInit = 0
@@ -39,6 +36,7 @@ def reflexion():
     rhoInit = 100*cst.eV*10**6/(cst.c**2*cst.fermi**3)
     tov = TOV(rhoInit, PsiInit, PhiInit, radiusMax_in, radiusMax_out, Npoint, option, dilaton_active, log_active)
     tov.ComputeTOV()
+    tov.Plot()
     r = tov.radius
     a = tov.g_tt
     b = tov.g_rr
@@ -119,7 +117,12 @@ def reflexion():
     ax3.plot(rho_p,phi_p,linestyle='dashed',label='analytical (+)',color=(0.929,0.694,0.125))
     ax3.axvline(x=radiusStar, color='r')
     ax3.set_xlim(0,r_lim)
-    ax3.set_ylim(phi[0],1.005)
+    if option == 1:
+        ax3.set_ylim(phi[0],1.005)
+    elif option == 2:
+        ax3.set_ylim(0.8,phi[0])
+    else:
+        print('not a valid option, try 1 or 2')
     plt.xlabel('Radius r [m]')
     plt.ylabel('dilaton field $\\Phi$', fontsize=12)
     ax3.legend()
