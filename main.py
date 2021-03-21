@@ -30,7 +30,7 @@ def unit_test():
 def reflexion():
     PhiInit = 1
     PsiInit = 0
-    option = 1
+    option = 2
     radiusMax_in = 40000
     radiusMax_out = 10000000
     Npoint = 1000000
@@ -60,8 +60,14 @@ def reflexion():
     print('f_a at infinity ', f_a[-1])
     print('f_b at infinity ', f_b[-1])
     print('f_phi at infinity ', f_phi[-1])
-    gamma = 1/(5+4*f_a[-1]/f_phi[-1])**(1/2)
-    r_m = f_a[-1]*1000*(1+gamma**2)/(-1+5*gamma**2)
+    if option == 1:
+        gamma = 1/(5+4*f_a[-1]/f_phi[-1])**(1/2)
+        r_m = f_a[-1]*1000*(1+gamma**2)/(-1+5*gamma**2)
+    elif option == 2:
+        gamma = 1/(-3-4*f_a[-1]/f_phi[-1])**(1/2)
+        r_m = -f_a[-1]*1000*(1+gamma**2)/(1+3*gamma**2)
+    else:
+        print('not a valid option, try 1 or 2')
     print('gamma', gamma)
     print('r_m',r_m )
     r_2 = np.linspace(r_m,r[-1],num=100000)
@@ -79,7 +85,7 @@ def reflexion():
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
     fig.set_figwidth(16)
     fig.set_figheight(4)
-    ax1.plot(r,a,label='numerical',color=(0.,0.447,0.741))
+    ax1.plot(r,a,label='numerical',color=(0.,0.447,0.741)) #<- Zoom window
     ax1.plot(rho_m,a_m,linestyle='dashed',label='analytical (-)',color=(0.85,0.325,0.098))
     ax1.plot(rho_p,a_p,linestyle='dashed',label='analytical (+)',color=(0.929,0.694,0.125))
     ax1.axvline(x=radiusStar, color='r')
@@ -88,8 +94,7 @@ def reflexion():
     axins1.plot(rho_m,a_m,linestyle='dashed',label='analytical (-)',color=(0.85,0.325,0.098))
     axins1.plot(rho_p,a_p,linestyle='dashed',label='analytical (+)',color=(0.929,0.694,0.125))
     axins1.axvline(x=radiusStar, color='r')
-    # sub region of the original image
-    x1, x2, y1, y2 = 20000, 30000, 0.895, 0.9105
+    x1, x2, y1, y2 = 20000, 30000, 0.895, 0.9105 #<- Zoom region
     axins1.set_xlim(x1, x2)
     axins1.set_ylim(y1, y2)
     axins1.set_xticklabels('')
@@ -340,6 +345,7 @@ def plotFig5():
 
 
 def main():
+    #unit_test()
     reflexion()
 
 main()
