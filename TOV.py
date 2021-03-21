@@ -165,7 +165,7 @@ class TOV():
         if self.log_active:
             print('radius min ',0.01)
             print('radius max ',self.radiusMax_in)
-        sol = solve_ivp(dy_dr, [0.01, self.radiusMax_in], y0, t_eval=r ,args=(self.option,self.dilaton_active))
+        sol = solve_ivp(dy_dr, [0.01, self.radiusMax_in], y0, method='RK45',t_eval=r ,args=(self.option,self.dilaton_active))
         # condition for Pressure = 0
         '''
         self.g_rr = b(sol.t, sol.y[1])
@@ -201,7 +201,7 @@ class TOV():
             if self.log_active:
                 print('radius min ',self.radiusStar)
                 print('radius max ',self.radiusMax_out)
-            sol = solve_ivp(dy_dr_out, [r[0], self.radiusMax_out], y0, t_eval=r, args=(0,self.option,self.dilaton_active))
+            sol = solve_ivp(dy_dr_out, [r[0], self.radiusMax_out], y0,method='DOP853', t_eval=r, args=(0,self.option,self.dilaton_active))
             self.pressure = np.concatenate([self.pressure, np.zeros(self.Npoint)])
             self.mass = np.concatenate([self.mass, sol.y[0]])
             self.Phi = np.concatenate([self.Phi, sol.y[1]])

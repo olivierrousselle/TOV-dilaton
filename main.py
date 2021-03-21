@@ -1,49 +1,120 @@
 #!/usr/bin/env python
-from TOV_2 import *
+from TOV import *
 import matplotlib
 import matplotlib.pyplot as plt
 import scipy.constants as cst
+import scipy.optimize
 import numpy as np
 import math
+from scipy.optimize import curve_fit
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+
+def a_(x,gamma,r_m):
+    return (rho**2-(x**2)*(1-(r_m/x))**((2*gamma**2)/(1+gamma**2)))**2
 
 def unit_test():
     PhiInit = 1
     PsiInit = 0
     option = 1
     radiusMax_in = 40000
-    radiusMax_out = 100000
-    Npoint = 100000
+    radiusMax_out = 10000000
+    Npoint = 1000000
     log_active = True
-    dilaton_active = False
+    dilaton_active = True
     rhoInit = 100*cst.eV*10**6/(cst.c**2*cst.fermi**3)
     tov = TOV(rhoInit, PsiInit, PhiInit, radiusMax_in, radiusMax_out, Npoint, option, dilaton_active, log_active)
     tov.ComputeTOV()
-
     tov.Plot()
-    tov.PlotMetric()
-    plt.axvline(23532/1000, color='r')
+    '''
     r = tov.radius
     a = tov.g_tt
     b = tov.g_rr
+    phi = tov.Phi
     phi_dot = tov.Psi
+    radiusStar = tov.radiusStar
     a_dot = (-a[1:-2]+a[2:-1])/(r[2:-1]-r[1:-2])
     b_dot = (-b[1:-2]+b[2:-1])/(r[2:-1]-r[1:-2])
-
-    plt.plot(r[1:-2]/1000,-a_dot*r[1:-2]*r[1:-2]/1000, label='$f_a$')
-    plt.plot(r[1:-2]/1000,-b_dot*r[1:-2]*r[1:-2]/1000, label='$f_b$')
-    plt.plot(r/1000,-phi_dot*r*r/1000, label='$f_\Phi$')
+    f_a = -a_dot*r[1:-2]*r[1:-2]/1000
+    f_b = -b_dot*r[1:-2]*r[1:-2]/1000
+    f_phi = -phi_dot*r*r/1000
+    '''
+    '''
+    plt.plot(r[1:-2]/1000,f_a, label='$f_a$')
+    plt.plot(r[1:-2]/1000,f_b, label='$f_b$')
+    plt.plot(r/1000,f_phi, label='$f_\Phi$')
     plt.legend()
     plt.xlabel('radius [km]')
     plt.ylabel('[km]')
     plt.show()
-    plt.plot(a_dot, marker = 'o')
+    print('f_a at infinity ', f_a[-1])
+    print('f_b at infinity ', f_b[-1])
+    print('f_phi at infinity ', f_phi[-1])
+    '''
+    '''
+    gamma = 1/(5+4*f_a[-1]/f_phi[-1])**(1/2)
+    r_m = f_a[-1]*1000*(1+gamma**2)/(-1+5*gamma**2)
+    print('gamma', gamma)
+    print('r_m',r_m )
+    r_2 = np.linspace(r_m,r[-1],num=100000)
+    rho_m = ((r_2**2)*(1-(r_m/r_2))**((-2*gamma**2)/(1+gamma**2)))**(1/2)
+    a_m = (1-r_m/r_2)**((1-5*gamma**2)/(1+gamma**2))
+    phi_m= (1-r_m/r_2)**((4*gamma**2)/(1+gamma**2))
+    drho_dr_m = (1+r_m/r_2)**((-1*gamma**2)/(1+gamma**2))-(r_m/r_2)*((-1*gamma**2)/(1+gamma**2))*(1+r_m/r_2)**((-1*gamma**2)/(1+gamma**2)-1)
+    b_m = (1-r_m/r_2)**((-1-3*gamma**2)/(1+gamma**2))*(drho_dr_m)**(-2)
+    rho_p = ((r_2**2)*(1-(r_m/r_2))**((6*gamma**2)/(1+gamma**2)))**(1/2)
+    a_p = (1-r_m/r_2)**((1+3*gamma**2)/(1+gamma**2))
+    phi_p= (1-r_m/r_2)**((-4*gamma**2)/(1+gamma**2))
+    drho_dr_p = (1+r_m/r_2)**((3*gamma**2)/(1+gamma**2))-(r_m/r_2)*((3*gamma**2)/(1+gamma**2))*(1+r_m/r_2)**((3*gamma**2)/(1+gamma**2)-1)
+    b_p = (1-r_m/r_2)**((-1+5*gamma**2)/(1+gamma**2))*(drho_dr_p)**(-2)
+    r_lim = 80000
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+    fig.set_figwidth(16)
+    fig.set_figheight(4)
+    ax1.plot(r,a,label='numerical',color=(0.,0.447,0.741))
+    ax1.plot(rho_m,a_m,linestyle='dashed',label='analytical (-)',color=(0.85,0.325,0.098))
+    ax1.plot(rho_p,a_p,linestyle='dashed',label='analytical (+)',color=(0.929,0.694,0.125))
+    ax1.axvline(x=radiusStar, color='r')
+    axins1 = ax1.inset_axes([0.4,0.1,0.5,0.4])
+    axins1.plot(r,a,label='numerical',color=(0.,0.447,0.741))
+    axins1.plot(rho_m,a_m,linestyle='dashed',label='analytical (-)',color=(0.85,0.325,0.098))
+    axins1.plot(rho_p,a_p,linestyle='dashed',label='analytical (+)',color=(0.929,0.694,0.125))
+    axins1.axvline(x=radiusStar, color='r')
+    # sub region of the original image
+    x1, x2, y1, y2 = 20000, 30000, 0.895, 0.9105
+    axins1.set_xlim(x1, x2)
+    axins1.set_ylim(y1, y2)
+    axins1.set_xticklabels('')
+    axins1.set_yticklabels('')
+    ax1.indicate_inset_zoom(axins1, label='')
+    ax1.set_xlim([0,r_lim])
+    ax1.set_ylim([a[0],1])
+    plt.xlabel('Radius r (km)')
+    plt.ylabel('a', fontsize=12)
+    ax1.legend()
+    ax2.plot(r,b,label='numerical',color=(0.,0.447,0.741))
+    ax2.plot(rho_m,b_m,linestyle='dashed',label='analytical (-)',color=(0.85,0.325,0.098))
+    ax2.plot(rho_p,b_p,linestyle='dashed',label='analytical (+)',color=(0.929,0.694,0.125))
+    ax2.axvline(x=radiusStar, color='r')
+    ax2.set_xlim(0,r_lim)
+    ax2.set_ylim(b[0],1.3)
+    plt.xlabel('Radius r (km)')
+    plt.ylabel('b', fontsize=12)
+    ax2.legend()
+    ax3.plot(r,phi,label='numerical',color=(0.,0.447,0.741))
+    ax3.plot(rho_m,phi_m,linestyle='dashed',label='analytical (-)',color=(0.85,0.325,0.098))
+    ax3.plot(rho_p,phi_p,linestyle='dashed',label='analytical (+)',color=(0.929,0.694,0.125))
+    ax3.axvline(x=radiusStar, color='r')
+    ax3.set_xlim(0,r_lim)
+    ax3.set_ylim(phi[0],1.005)
+    plt.xlabel('Radius r [m]')
+    plt.ylabel('dilaton field $\\Phi$', fontsize=12)
+    ax3.legend()
     plt.show()
-
-    p = tov.pressure
-    plt.plot(r[1:-2],(-p[1:-2]+p[2:-1])/(r[2:-1]-r[1:-2]),'o')
-    plt.axvline(tov.radiusStar)
+    plt.plot(a_m*b_m)
+    plt.plot(a_p*b_p)
     plt.show()
-
+    '''
 def findSameMass(mass):
     """
     input:
