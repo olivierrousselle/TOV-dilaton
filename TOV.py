@@ -63,28 +63,28 @@ def bdotb(r, P, m, Psi, Phi, option):
     return A+B+C
 
 #Equation for dP/dr
-def f1(r, P, m, Psi, Phi, option):
-    ADOTA = adota(r, P, m, Psi, Phi)
-    Lm = Lagrangian(P, option)
-    rho = RhoEQS(P)
-    return -(ADOTA/2)*(P+rho*c2)+(Psi/(2*Phi))*(Lm-P)
+def f1(r, P, m, Psi, Phi, option, P0):
+    ADOTA = adota(r, P*P0, m*massSun, Psi, Phi)
+    Lm = Lagrangian(P*P0, option)
+    rho = RhoEQS(P*P0)
+    return -(ADOTA/2)*(P+rho*c2/P0)+(Psi/(2*Phi))*(Lm/P0-P)
 
 #Equation for dm/dr
-def f2(r, P, m, Psi, Phi, option):
-    rho = RhoEQS(P)
+def f2(r, P, m, Psi, Phi, option,P0):
+    rho = RhoEQS(P*P0)
     A = 4*np.pi*rho*(Phi**(-1/2))*r**2
-    B = 4*np.pi*(-D00(r, P, m, Psi, Phi, option)/(kappa*c2))*r**2
-    return A+B
+    B = 4*np.pi*(-D00(r, P*P0, m*massSun, Psi, Phi, option)/(kappa*c2))*r**2
+    return (A+B)/massSun
 
 #Equation for dPsi/dr
-def f4(r, P, m, Psi, Phi, option, dilaton_active):
-    ADOTA = adota(r, P, m, Psi, Phi)
-    BDOTB = bdotb(r, P, m, Psi, Phi, option)
-    rho = RhoEQS(P)
-    Lm = Lagrangian(P, option)
-    T = -c2*rho + 3*P
+def f4(r, P, m, Psi, Phi, option, dilaton_active,P0):
+    ADOTA = adota(r, P*P0, m*massSun, Psi, Phi)
+    BDOTB = bdotb(r, P*P0, m*massSun, Psi, Phi, option)
+    rho = RhoEQS(P*P0)
+    Lm = Lagrangian(P*P0, option)
+    T = -c2*rho + 3*P*P0
     A = (-Psi/2)*(ADOTA-BDOTB+4/r)
-    B = b(r,m)*kappa*Phi**(1/2)*(T-Lm)/3
+    B = b(r,m*massSun)*kappa*Phi**(1/2)*(T-Lm)/3
     if dilaton_active:
         return A+B
     else:
@@ -98,15 +98,15 @@ def f3(r, P, m, Psi, Phi, option, dilaton_active):
         return 0
 
 #Define for dy/dr
-def dy_dr(r, y, option, dilaton_active):
+def dy_dr(r, y, option, dilaton_active,P0):
     P, M, Phi, Psi = y
-    dy_dt = [f1(r, P, M, Psi, Phi, option), f2(r, P, M, Psi, Phi, option),f3(r, P, M, Psi, Phi, option, dilaton_active),f4(r, P, M, Psi, Phi, option, dilaton_active) ]
+    dy_dt = [f1(r, P, M, Psi, Phi, option,P0), f2(r, P, M, Psi, Phi, option,P0),f3(r, P, M, Psi, Phi, option, dilaton_active),f4(r, P, M, Psi, Phi, option, dilaton_active,P0) ]
     return dy_dt
 
 #Define for dy/dr out of the star
-def dy_dr_out(r, y, P, option, dilaton_active):
+def dy_dr_out(r, y, P, option, dilaton_active,P0):
     M, Phi, Psi = y
-    dy_dt = [f2(r, P, M, Psi, Phi, option),f3(r, P, M, Psi, Phi, option, dilaton_active),f4(r, P, M, Psi, Phi, option, dilaton_active) ]
+    dy_dt = [f2(r, P, M, Psi, Phi, option, P0),f3(r, P, M, Psi, Phi, option, dilaton_active),f4(r, P, M, Psi, Phi, option, dilaton_active, P0) ]
     return dy_dt
 
 class TOV():
@@ -158,14 +158,14 @@ class TOV():
             print('Initial psi: ', self.initPsi)
             print('Number of points: ', self.Npoint)
             print('Radius max: ', self.radiusMax_in/1000, ' km')
-        y0 = [self.initPressure,self.initMass,self.initPhi,self.initPsi]
+        y0 = [1,self.initMass,self.initPhi,self.initPsi]
         if self.log_active:
             print('y0 = ', y0,'\n')
-        r = np.linspace(0.01,self.radiusMax_in,self.Npoint)
+        r = np.linspace(0.00000001,self.radiusMax_in,self.Npoint)
         if self.log_active:
-            print('radius min ',0.01)
+            print('radius min ',0.00000001)
             print('radius max ',self.radiusMax_in)
-        sol = solve_ivp(dy_dr, [0.01, self.radiusMax_in], y0, method='RK45',t_eval=r ,args=(self.option,self.dilaton_active))
+        sol = solve_ivp(dy_dr, [0.00000001, self.radiusMax_in], y0, t_eval=r ,args=(self.option,self.dilaton_active,self.initPressure))
         # condition for Pressure = 0
         '''
         self.g_rr = b(sol.t, sol.y[1])
@@ -188,9 +188,9 @@ class TOV():
             n_star = len(self.radius)
             if self.log_active:
                 print('Star radius: ', self.radiusStar/1000, ' km')
-                print('Star Mass: ', self.massStar/massSun, ' solar mass')
+                print('Star Mass: ', self.massStar, ' solar mass')
                 print('Star Mass: ', self.massStar, ' kg')
-                print('Star pressure: ', self.pressureStar, ' Pa\n')
+                print('Star pressure: ', self.pressureStar, ' /P0\n')
                 print('===========================================================')
                 print('SOLVER OUTSIDE THE STAR')
                 print('===========================================================\n')
@@ -201,7 +201,7 @@ class TOV():
             if self.log_active:
                 print('radius min ',self.radiusStar)
                 print('radius max ',self.radiusMax_out)
-            sol = solve_ivp(dy_dr_out, [r[0], self.radiusMax_out], y0,method='DOP853', t_eval=r, args=(0,self.option,self.dilaton_active))
+            sol = solve_ivp(dy_dr_out, [r[0], self.radiusMax_out], y0, t_eval=r, args=(0,self.option,self.dilaton_active,self.initPressure))
             self.pressure = np.concatenate([self.pressure, np.zeros(self.Npoint)])
             self.mass = np.concatenate([self.mass, sol.y[0]])
             self.Phi = np.concatenate([self.Phi, sol.y[1]])
@@ -211,8 +211,8 @@ class TOV():
             if self.log_active:
                 print('Phi at infinity ', self.phi_inf)
             # Compute metrics
-            self.g_rr = b(self.radius, self.mass)
-            a_dot_a = adota(self.radius, self.pressure, self.mass, self.Psi, self.Phi)
+            self.g_rr = b(self.radius, self.mass*massSun)
+            a_dot_a = adota(self.radius, self.pressure*self.initPressure, self.mass*massSun, self.Psi, self.Phi)
             #plt.plot(self.radius, np.concatenate([[0.0], integcum(a_dot_a,self.radius)]))
             #plt.show()
             self.g_tt = np.exp(np.concatenate([[0.0], integcum(a_dot_a,self.radius)])-integ(a_dot_a,self.radius))
@@ -247,7 +247,7 @@ class TOV():
         plt.axvline(x=self.radiusStar/10**3, color='r')
 
         plt.subplot(222)
-        plt.plot([x/10**3 for x in self.radius], [x/massSun for x in self.mass])
+        plt.plot([x/10**3 for x in self.radius], [x for x in self.mass])
         plt.xlabel('Radius r (km)')
         plt.title('Mass $M/M_{\odot}$', fontsize=12)
         plt.axvline(x=self.radiusStar/10**3, color='r')

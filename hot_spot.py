@@ -52,29 +52,46 @@ def ComputeFlux():
     # initialize variable
     PhiInit = 1
     PsiInit = 0
-    option = 1
+
     radiusMax_in = 40000
     radiusMax_out = 100000000
     Npoint = 600000
     log_active = True
     colorlist = {}
     labels = {}
-    rho0 = 10000
+    linestyles = {}
+    rho0 = 5000
     rhoInit = rho0*cst.eV*10**6/(cst.c**2*cst.fermi**3)
-    iota = np.pi/4
-    gamma = np.pi/4
+    iota = np.pi/2
+    gamma = np.pi/2
     f = 400
     omega = 2*np.pi*f
-    t0 = np.linspace(0,4*10**(-3),100)
-    for i in range(2):
-        if i==0:
+    t0 = np.linspace(0.0000000001,4*10**(-3),100)
+    for i in range(4):
+        if i==1:
+            option = 0
             dilaton_active = True
-            colorlist[0] = 'orangered'
-            labels[0] = 'ER'
-        else:
+            colorlist[1] = 'orangered'
+            labels[1] = 'ER ($L_m=T$)'
+            linestyles[1] = '--'
+        elif i==0:
+            option = 0
             dilaton_active = False
-            colorlist[1] = 'k'
-            labels[1] = 'GR'
+            colorlist[0] = 'k'
+            labels[0] = 'GR'
+            linestyles[0] = '-'
+        if i==2:
+            option = 1
+            dilaton_active = True
+            colorlist[2] = 'red'
+            labels[2] = 'ER ($L_m=-c^2\\rho$)'
+            linestyles[2] = '--'
+        if i==3:
+            option = 2
+            dilaton_active = True
+            colorlist[3] = 'orange'
+            labels[3] = 'ER ($L_m=P$)'
+            linestyles[3] = '--'
         # Compute NS exterior space-time
         tov = TOV(rhoInit, PsiInit, PhiInit, radiusMax_in, radiusMax_out, Npoint, option, dilaton_active, log_active)
         tov.ComputeTOV()
@@ -119,7 +136,7 @@ def ComputeFlux():
         plt.xlabel('$\\alpha$')
         plt.ylabel('$\\psi$')
         plt.figure(4)
-        plt.plot(t_obs*1000,Flux,color=colorlist[i],label=labels[i])
+        plt.plot(t_obs*1000,Flux,color=colorlist[i],label=labels[i],linestyle=linestyles[i])
         plt.xlabel('observer time [ms]')
         plt.ylabel('Noralized flux')
         plt.legend()
