@@ -7,7 +7,10 @@ from numpy import linalg as npla
 from scipy.integrate import solve_ivp
 from scipy.integrate import cumtrapz as integcum
 from scipy.integrate import trapz as integ
-
+"""
+TOV equation solver in the context of Entangled Relativity (ER).
+Based on "Compact Objects in Entangled Relativity" (2011.14629.pdf).
+"""
 c2 = cst.c**2
 kappa = 8*np.pi*cst.G/c2**2
 k = 1.475*10**(-3)*(cst.fermi**3/(cst.eV*10**6))**(2/3)*c2**(5/3)
@@ -35,14 +38,14 @@ def Lagrangian(P, option):
 
 #Equation for b
 def b(r, m):
-    return (1-(c2*m*kappa/(4*np.pi*r)))**(-1)
+    return (1-(c2*m*kappa/(4*np.pi*r)))**(-1) # Eq (29) in 2011.14629.pdf
 
-#Equation for da/dr
+#Equation for (da/dr)/a
 def adota(r, P, m, Psi, Phi):
     A = (b(r, m)/r)
     B = (1-(1/b(r, m))+P*kappa*r**2*Phi**(-1/2)-2*r*Psi/(b(r,m)*Phi))
     C = (1+r*Psi/(2*Phi))**(-1)
-    return A*B*C
+    return A*B*C # Eq (17) in 2011.14629.pdf
 
 #Equation for D00
 def D00(r, P, m, Psi, Phi, option):
@@ -50,9 +53,9 @@ def D00(r, P, m, Psi, Phi, option):
     rho = RhoEQS(P)
     Lm = Lagrangian(P, option)
     T = -c2*rho + 3*P
-    A = Psi*ADOTA/(2*Phi*b(r,m))
+    A = Psi*ADOTA/(2*Phi*b(r,m)) #
     B = kappa*(Lm-T)/(3*Phi**(1/2))
-    return A+B
+    return A+B # Eq (11) in 2011.14629.pdf
 
 #Equation for db/dr
 def bdotb(r, P, m, Psi, Phi, option):
@@ -60,21 +63,21 @@ def bdotb(r, P, m, Psi, Phi, option):
     A = -b(r,m)/r
     B = 1/r
     C = b(r,m)*r*(-D00(r, P, m, Psi, Phi, option)+kappa*c2*rho*Phi**(-1/2))
-    return A+B+C
+    return A+B+C # Eq (10) in 2011.14629.pdf
 
 #Equation for dP/dr
 def f1(r, P, m, Psi, Phi, option, P0):
     ADOTA = adota(r, P*P0, m*massSun, Psi, Phi)
     Lm = Lagrangian(P*P0, option)
     rho = RhoEQS(P*P0)
-    return -(ADOTA/2)*(P+rho*c2/P0)+(Psi/(2*Phi))*(Lm/P0-P)
+    return -(ADOTA/2)*(P+rho*c2/P0)+(Psi/(2*Phi))*(Lm/P0-P) # Eq (20) in 2011.14629.pdf
 
 #Equation for dm/dr
 def f2(r, P, m, Psi, Phi, option,P0):
     rho = RhoEQS(P*P0)
     A = 4*np.pi*rho*(Phi**(-1/2))*r**2
     B = 4*np.pi*(-D00(r, P*P0, m*massSun, Psi, Phi, option)/(kappa*c2))*r**2
-    return (A+B)/massSun
+    return (A+B)/massSun # Eq (23) in 2011.14629.pdf
 
 #Equation for dPsi/dr
 def f4(r, P, m, Psi, Phi, option, dilaton_active,P0):
@@ -86,14 +89,14 @@ def f4(r, P, m, Psi, Phi, option, dilaton_active,P0):
     A = (-Psi/2)*(ADOTA-BDOTB+4/r)
     B = b(r,m*massSun)*kappa*Phi**(1/2)*(T-Lm)/3
     if dilaton_active:
-        return A+B
+        return A+B # Eq (21) in 2011.14629.pdf
     else:
         return 0
 
 #Equation for dPhi/dr
 def f3(r, P, m, Psi, Phi, option, dilaton_active):
     if dilaton_active:
-        return Psi
+        return Psi # Eq (24) in 2011.14629.pdf
     else:
         return 0
 
@@ -110,15 +113,36 @@ def dy_dr_out(r, y, P, option, dilaton_active,P0):
     return dy_dt
 
 class TOV():
-
-    def __init__(self, initDensity, initPsi, initPhi, radiusMax_in, radiusMax_out, Npoint, EQS_type, dilaton_active, log_active):
+    """
+    * Initialization
+        - initDensity: initial (meaning at star center) value of density [MeV/fm3]
+        - initPsi: initial value for psi (usually to 1).
+        - initPhi: initial value for the derivative of psi (usually taken to 0).
+        - radiusMax_in: For star interior, the solver integrates until it reach radiusMax_in.
+        - radiusMax_out: For star exterior, the solver integrates until it reach radiusMax_out.
+        - Npoint: Number at which the solution is evaluated (t_span in solve_ivp).
+        - lag_type: Select lagrangian.
+            0 -> Lm=T
+            1 -> Lm=-c²rho
+            2 -> Lm=P
+        - dilaton_active:
+            True -> Solves for equation of ER.
+            False -> Solves for equation of GR.
+        - log_active: Consol outputs.
+            True -> activates consol output
+    * ComputeTOV
+    * Compute
+    * Plot
+    * PlotMetric
+    """
+    def __init__(self, initDensity, initPsi, initPhi, radiusMax_in, radiusMax_out, Npoint, lag_type, dilaton_active, log_active):
 #Init value
-        self.initDensity = initDensity
+        self.initDensity = initDensity*cst.eV*10**6/(cst.c**2*cst.fermi**3)
         self.initPressure = PEQS(initDensity)
         self.initPsi = initPsi
         self.initPhi = initPhi
         self.initMass = 0
-        self.option = EQS_type
+        self.option = lag_type
         self.dilaton_active = dilaton_active
         self.log_active = log_active
 
